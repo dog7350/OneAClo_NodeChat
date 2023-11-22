@@ -1,33 +1,38 @@
 var express = require('express');
 var path = require('path');
-
-var indexRouter = require('./routes/index');
-
 var app = express();
 
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
+app.get("/", (req, res) => {
+    res.redirect("http://www.oneaclo.kro.kr")
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
-
 const mongoose = require("mongoose");
 const chatLog = require("./config/mongo_config");
-const http = require("http").createServer(app);
-const io = require("socket.io")(http);
 
-io.on('connection', (socket) => {
+const http = require("http").createServer(app);
+http.listen(8811, "0.0.0.0", () => { console.log("Chatting Server Starting...") });
+
+const WebSocket = require("ws");
+const wss = new WebSocket.Server({ server : http });
+
+wss.on('connection', (socket) => {
+    console.log("클라이언트 연결");
+
     try {
-        mongoose.connect('mongodb://oac:oac@oneaclo.kro.kr:27017/oacChatLog', { useNewUrlParser: true }, (err, db) => {});
+        mongoose.connect('mongodb://oac:oac@43.202.160.36:27017/oneaclo', { useNewUrlParser: true }, (err, db) => {});
     } catch (e) {
         console.log(e);
     }
     mongoose.connection.on("error", console.error.bind(console, "연결 오류 : "));
 
-    socket.on("chat message", (msg) => {
+    socket.on("message", (msg) => {
         const str = String(msg).split('|');
 
         const site = str[0];
@@ -47,10 +52,11 @@ io.on('connection', (socket) => {
         chat.content = content;
         chat.save((err, data) => { if (err) { console.log(err); } });
 
-        io.emit('chat message', msg);
+        socket.send(msg);
     });
 
-    socket.on("disconnect", () => {
+    socket.on("close", () => {
+        console.log("클라이언트 종료");
         try {
             mongoose.disconnect();
         } catch (error) {
@@ -58,5 +64,3 @@ io.on('connection', (socket) => {
         }
     });
 });
-
-http.listen(8811, "0.0.0.0", () => { console.log("Server Starting...") });
