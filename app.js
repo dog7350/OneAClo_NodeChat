@@ -52,7 +52,7 @@ wss.on('connection', (socket) => {
         chat.content = content;
         chat.save((err, data) => { if (err) { console.log(err); } });
 
-        socket.send(msg);
+        wss.clients.forEach(client => { client.send(msg); });
     });
 
     socket.on("close", () => {
