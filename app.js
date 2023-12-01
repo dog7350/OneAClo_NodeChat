@@ -26,7 +26,7 @@ wss.on('connection', (socket) => {
     console.log("클라이언트 연결");
 
     try {
-        mongoose.connect('mongodb://oac:oac@43.202.160.36:27017/oneaclo', { useNewUrlParser: true }, (err, db) => {});
+        mongoose.connect('mongodb://oac:oac@43.202.160.36:8821/oneaclo', { useNewUrlParser: true }, (err, db) => {});
     } catch (e) {
         console.log(e);
     }
